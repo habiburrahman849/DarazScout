@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DarazScout — PK FBM Profit & Margin Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-badge">DS</span>
+        <div>
+          <div class="brand-title">DarazScout <span class="tag">By FutureWala</span></div>
+          <div class="brand-sub">Seller Profit, Margin &amp; Commission Intelligence</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" id="btnSaveProduct" class="btn btn-primary">+ Save to Comparison</button>
+        <button type="button" id="btnExportCsv" class="btn btn-ghost">Export CSV</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <!-- Top 4 KPI Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Net Profit / Unit</div>
+        <div class="kpi-value" id="kpiProfit">Rs. 0</div>
+        <div class="kpi-meta" id="kpiPayout">Net Payout: Rs. 0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Net Profit Margin</div>
+        <div class="kpi-value" id="kpiMargin">0.0%</div>
+        <div class="kpi-meta">Profit / Selling Price</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Return on Investment</div>
+        <div class="kpi-value" id="kpiRoi">0.0%</div>
+        <div class="kpi-meta">Profit / Product Cost</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Break-Even Price</div>
+        <div class="kpi-value" id="kpiBreakEven">Rs. 0</div>
+        <div class="kpi-meta">Minimum price for Rs. 0 profit</div>
+      </div>
+    </section>
+
+    <!-- Main 2-Column Workspace -->
+    <section class="workspace">
+      <!-- Left: Inputs -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Product &amp; Fee Inputs</h2>
+          <span class="pill">7,851 PK Categories</span>
+        </div>
+
+        <div class="field autocomplete-wrap">
+          <label for="catSearch">Search Category (May 2026 PK Rates)</label>
+          <input type="text" id="catSearch" autocomplete="off" placeholder="Type e.g. SmartWatches, Laptops, Skin Care...">
+          <div id="catDropdown" class="dropdown hidden"></div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="productName">Product Name (Optional)</label>
+            <input type="text" id="productName" placeholder="e.g. Wireless Earbuds Pro">
+          </div>
+          <div class="field">
+            <label for="comm">Category Commission (%)</label>
+            <input type="number" id="comm" value="10.00" min="0" max="35" step="0.01">
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="price">Selling Price w/ Discount (Rs.)</label>
+            <input type="number" id="price" value="3000" min="0" step="50">
+          </div>
+          <div class="field">
+            <label for="cost">Product + Packaging Cost (Rs.)</label>
+            <input type="number" id="cost" value="1500" min="0" step="50">
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="vat">Province (VAT Rate)</label>
+            <select id="vat">
+              <option value="0.15">KPK (15%)</option>
+              <option value="0.15">Sindh (15%)</option>
+              <option value="0.15">Balochistan (15%)</option>
+              <option value="0.16">Punjab (16%)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="handling">FBM Handling Mode</label>
+            <select id="handling">
+              <option value="dropoff">Drop-off (Rs. 10-60)</option>
+              <option value="pickup_std">Pickup &lt; 8kg (Rs. 30)</option>
+              <option value="pickup_bulky">Pickup 8kg+ (Rs. 120)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label for="paymentType">Payment Method (WHT)</label>
+            <select id="paymentType">
+              <option value="cod">Cash on Delivery (2% ATL)</option>
+              <option value="prepaid">Prepaid / Card (1% ATL)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="monthlyUnits">Est. Monthly Sales (Units)</label>
+            <input type="number" id="monthlyUnits" value="50" min="1" step="5">
+          </div>
+        </div>
+
+        <div class="toggle-group">
+          <label class="toggle-chip"><input type="checkbox" id="fsm"><span>Free Shipping Max (~6%)</span></label>
+          <label class="toggle-chip"><input type="checkbox" id="voucher"><span>Voucher Max (2%)</span></label>
+          <label class="toggle-chip"><input type="checkbox" id="nonAtl"><span>Non-ATL (+1% ST WHT)</span></label>
+        </div>
+      </div>
+
+      <!-- Right: Breakdown & Monthly Projection -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Revenue &amp; Fee Breakdown</h2>
+          <span class="pill pill-dark" id="totalFeePctBadge">0.0% Fees</span>
+        </div>
+
+        <!-- Visual Stacked Bar -->
+        <div class="stack-bar" role="img" aria-label="Revenue breakdown bar">
+          <div id="barProfit" class="seg seg-profit" style="width: 30%;"></div>
+          <div id="barCost" class="seg seg-cost" style="width: 50%;"></div>
+          <div id="barComm" class="seg seg-comm" style="width: 12%;"></div>
+          <div id="barOther" class="seg seg-other" style="width: 8%;"></div>
+        </div>
+        <div class="legend">
+          <span><i class="dot dot-profit"></i>Profit</span>
+          <span><i class="dot dot-cost"></i>Product Cost</span>
+          <span><i class="dot dot-comm"></i>Commission + VAT</span>
+          <span><i class="dot dot-other"></i>Other Fees &amp; Tax</span>
+        </div>
+
+        <table class="fee-table">
+          <tbody>
+            <tr><td>Commission Value (Price &times; Comm %)</td><td id="rowComm">Rs. 0</td></tr>
+            <tr><td>VAT on Commission</td><td id="rowCommVat">Rs. 0</td></tr>
+            <tr class="sub-highlight"><td>Commission with VAT</td><td id="rowCommWithVat">Rs. 0</td></tr>
+            <tr><td>Payment Fee (2.25%)</td><td id="rowPay">Rs. 0</td></tr>
+            <tr><td>Handling / Pickup Fee</td><td id="rowHandle">Rs. 0</td></tr>
+            <tr><td>Campaigns (Free Shipping Max / Voucher)</td><td id="rowCamp">Rs. 0</td></tr>
+            <tr><td>VAT on Other Daraz Fees</td><td id="rowOtherVat">Rs. 0</td></tr>
+            <tr><td>Income + Sales Tax Withholding</td><td id="rowWht">Rs. 0</td></tr>
+            <tr class="total-row"><td>Total Daraz Deductions / Unit</td><td id="rowTotalFees">Rs. 0</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Monthly Scaling Box -->
+        <div class="monthly-box">
+          <div class="monthly-title">Monthly Projection (<span id="lblUnits">50</span> units/mo)</div>
+          <div class="monthly-grid">
+            <div><span>Est. Revenue</span><strong id="moRev">Rs. 0</strong></div>
+            <div><span>Daraz Fees</span><strong id="moFees">Rs. 0</strong></div>
+            <div><span>Net Profit</span><strong id="moProfit" class="text-pos">Rs. 0</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Saved Products Comparison Table -->
+    <section class="panel tracker-panel">
+      <div class="panel-header">
+        <h2>Saved Product Comparison</h2>
+        <button type="button" id="btnClearSaved" class="btn btn-sm btn-ghost">Clear All</button>
+      </div>
+      <div class="table-wrap">
+        <table class="tracker-table">
+          <thead>
+            <tr>
+              <th>Product / Category</th>
+              <th>Price</th>
+              <th>Cost</th>
+              <th>Comm %</th>
+              <th>Total Fees</th>
+              <th>Net Profit</th>
+              <th>Margin</th>
+              <th>ROI</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="savedBody">
+            <tr class="empty-row"><td colspan="9">No products saved yet. Click "+ Save to Comparison" above to compare products.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="categories.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
